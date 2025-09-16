@@ -17,7 +17,9 @@ jobs:
           shell: bash
           working-directory: pt26-cu124
           run: bash stage1.sh
-
+        - name: Install dependencies
+          run: |
+            pip install numpy>=2.0.0,<2.3.0 av
         - name: Stage 2 Assembling Repositories
           shell: bash
           working-directory: pt26-cu124
