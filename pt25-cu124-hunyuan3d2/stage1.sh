@@ -27,6 +27,7 @@ $pip_exe install -r "$workdir"/pak2.txt
 $pip_exe install -r "$workdir"/pak3.txt
 $pip_exe install -r "$workdir"/pak4.txt
 
+$pip install numpy>=2.0.0,<2.3.0 av
 $pip_exe list
 
 # Add Ninja binary (replacing PIP Ninja)
