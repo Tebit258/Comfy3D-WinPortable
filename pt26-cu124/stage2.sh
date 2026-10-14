@@ -20,17 +20,24 @@ mkdir -p "${TORCH_HOME}"
 # Relocate python_standalone
 # This move is intentional. It will fast-fail if anything breaks.
 mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalone
-# Install required packages (satisfying rembg and modern requirements with numpy >= 2.3.0)
+
+# Install required packages
 $python_exe -m pip install "numpy>=2.3.0,<3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
 
-# Patch all list[int] type hints in comfy_kitchen for PyTorch 2.6 compatibility
-site_packages_dir=$($python_exe -c "import site; print(site.getsitepackages()[0])")
-comfy_kitchen_dir="$site_packages_dir/comfy_kitchen"
-
-if [ -d "$comfy_kitchen_dir" ]; then
-    echo "Patching comfy_kitchen for PyTorch 2.6 schema validation..."
-    find "$comfy_kitchen_dir" -name "*.py" -exec sed -i 's/list\[int\]/Sequence[int]/g' {} +
-fi
+# Patch comfy_kitchen conv3d.py for PyTorch 2.6 compatibility using a direct Python snippet
+$python_exe -c "
+import site, os
+for site_dir in site.getsitepackages():
+    conv3d_path = os.path.join(site_dir, 'comfy_kitchen', 'backends', 'eager', 'conv3d.py')
+    if os.path.exists(conv3d_path):
+        print(f'Patching {conv3d_path}...')
+        with open(conv3d_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        content = content.replace('stride: list[int]', 'stride: Sequence[int]')
+        with open(conv3d_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        break
+"
 
 # Download ComfyUI main app
 git clone https://github.com/comfyanonymous/ComfyUI.git \
