@@ -20,7 +20,17 @@ mkdir -p "${TORCH_HOME}"
 # Relocate python_standalone
 # This move is intentional. It will fast-fail if anything breaks.
 mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalone
+# Install required packages
 $python_exe -m pip install "numpy>=2.0.0,<2.3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
+
+# Patch comfy_kitchen conv3d.py to fix PyTorch 2.6 type hint compatibility (list[int] -> Sequence[int])
+site_packages_dir=$($python_exe -c "import site; print(site.getsitepackages()[0])")
+conv3d_file="$site_packages_dir/comfy_kitchen/backends/eager/conv3d.py"
+
+if [ -f "$conv3d_file" ]; then
+    echo "Patching comfy_kitchen conv3d.py for PyTorch 2.6 compatibility..."
+    sed -i 's/stride: list\[int\]/stride: Sequence[int]/g' "$conv3d_file"
+fi
 
 # Download ComfyUI main app
 git clone https://github.com/comfyanonymous/ComfyUI.git \
