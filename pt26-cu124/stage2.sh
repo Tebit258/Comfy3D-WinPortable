@@ -24,27 +24,28 @@ mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalo
 # Install required packages
 $python_exe -m pip install "numpy>=2.3.0,<3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
 
-# Patch all comfy_kitchen python files for PyTorch 2.6 schema compatibility
+# Patch all comfy_kitchen python files to replace generic list[...] type hints with Sequence[...] for PyTorch 2.6 compatibility
 $python_exe -c "
-import site, os, glob
+import site, os, glob, re
 for site_dir in site.getsitepackages():
     kitchen_dir = os.path.join(site_dir, 'comfy_kitchen')
     if os.path.exists(kitchen_dir):
-        print(f'Scanning and patching comfy_kitchen in {kitchen_dir}...')
+        print(f'Scanning and patching comfy_kitchen recursively in {kitchen_dir}...')
         for py_file in glob.glob(os.path.join(kitchen_dir, '**', '*.py'), recursive=True):
             with open(py_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            if 'list[int]' in content:
-                print(f'Patching list[int] in {os.path.basename(py_file)}...')
+            # Buscar cualquier patrón tipo list[...] usando expresiones regulares
+            if re.search(r'list\[', content):
+                print(f'Patching list[...] generics in {os.path.basename(py_file)}...')
                 # Asegurar la importación de Sequence
                 if 'from typing import' in content and 'Sequence' not in content:
                     content = content.replace('from typing import', 'from typing import Sequence,')
                 elif 'from typing import' not in content:
                     content = 'from typing import Sequence\n' + content
                 
-                # Reemplazar todas las ocurrencias de list[int]
-                content = content.replace('list[int]', 'Sequence[int]')
+                # Reemplazar list[...] por Sequence[...] de manera genérica
+                content = re.sub(r'list\[', 'Sequence[', content)
                 
                 with open(py_file, 'w', encoding='utf-8') as f:
                     f.write(content)
