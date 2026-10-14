@@ -24,7 +24,7 @@ mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalo
 # Install required packages
 $python_exe -m pip install "numpy>=2.3.0,<3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
 
-# Patch all comfy_kitchen python files to replace generic list[...] type hints with Sequence[...] for PyTorch 2.6 compatibility
+# Patch all comfy_kitchen python files safely respecting __future__ imports
 $python_exe -c "
 import site, os, glob, re
 for site_dir in site.getsitepackages():
@@ -35,14 +35,17 @@ for site_dir in site.getsitepackages():
             with open(py_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Buscar cualquier patrón tipo list[...] usando expresiones regulares
-            if re.search(r'list\[', content):
+            if re.search(r'list\\[', content):
                 print(f'Patching list[...] generics in {os.path.basename(py_file)}...')
-                # Asegurar la importación de Sequence
-                if 'from typing import' in content and 'Sequence' not in content:
-                    content = content.replace('from typing import', 'from typing import Sequence,')
-                elif 'from typing import' not in content:
-                    content = 'from typing import Sequence\n' + content
+                
+                # Asegurar la importación de Sequence después de __future__
+                if 'Sequence' not in content:
+                    if 'from __future__ import annotations' in content:
+                        content = content.replace('from __future__ import annotations', 'from __future__ import annotations\nfrom typing import Sequence')
+                    elif 'from typing import' in content:
+                        content = content.replace('from typing import', 'from typing import Sequence,')
+                    else:
+                        content = 'from typing import Sequence\n' + content
                 
                 # Reemplazar list[...] por Sequence[...] de manera genérica
                 content = re.sub(r'list\[', 'Sequence[', content)
