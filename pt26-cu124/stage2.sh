@@ -20,16 +20,16 @@ mkdir -p "${TORCH_HOME}"
 # Relocate python_standalone
 # This move is intentional. It will fast-fail if anything breaks.
 mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalone
-# Install required packages
-$python_exe -m pip install "numpy>=2.0.0,<2.3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
+# Install required packages (satisfying rembg and modern requirements with numpy >= 2.3.0)
+$python_exe -m pip install "numpy>=2.3.0,<3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
 
-# Patch comfy_kitchen conv3d.py to fix PyTorch 2.6 type hint compatibility (list[int] -> Sequence[int])
+# Patch all list[int] type hints in comfy_kitchen for PyTorch 2.6 compatibility
 site_packages_dir=$($python_exe -c "import site; print(site.getsitepackages()[0])")
-conv3d_file="$site_packages_dir/comfy_kitchen/backends/eager/conv3d.py"
+comfy_kitchen_dir="$site_packages_dir/comfy_kitchen"
 
-if [ -f "$conv3d_file" ]; then
-    echo "Patching comfy_kitchen conv3d.py for PyTorch 2.6 compatibility..."
-    sed -i 's/stride: list\[int\]/stride: Sequence[int]/g' "$conv3d_file"
+if [ -d "$comfy_kitchen_dir" ]; then
+    echo "Patching comfy_kitchen for PyTorch 2.6 schema validation..."
+    find "$comfy_kitchen_dir" -name "*.py" -exec sed -i 's/list\[int\]/Sequence[int]/g' {} +
 fi
 
 # Download ComfyUI main app
