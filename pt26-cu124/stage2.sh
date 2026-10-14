@@ -20,6 +20,7 @@ mkdir -p "${TORCH_HOME}"
 # Relocate python_standalone
 # This move is intentional. It will fast-fail if anything breaks.
 mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalone
+$python_exe -m pip install "numpy>=2.0.0<2.3.0" av comfy_aimdo
 
 # Download ComfyUI main app
 git clone https://github.com/comfyanonymous/ComfyUI.git \
