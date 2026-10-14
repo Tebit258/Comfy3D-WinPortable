@@ -20,7 +20,7 @@ mkdir -p "${TORCH_HOME}"
 # Relocate python_standalone
 # This move is intentional. It will fast-fail if anything breaks.
 mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalone
-$python_exe -m pip install "numpy>=2.0.0,<2.3.0" av comfy_aimdo comfy_kitchen
+$python_exe -m pip install "numpy>=2.0.0,<2.3.0" av comfy_aimdo
 
 # Download ComfyUI main app
 git clone https://github.com/comfyanonymous/ComfyUI.git \
@@ -65,7 +65,7 @@ $python_exe -s -B install.py
 ################################################################################
 # Run the test (CPU only), also let custom nodes download some models
 cd "$workdir"/Comfy3D_WinPortable
-./python_standalone/python.exe -s -B "ComfyUI/main.py" --quick-test-for-ci --cpu
+COMFY_DISABLE_KITCHEN=1 ./python_standalone/python.exe -s -B "ComfyUI/main.py" --quick-test-for-ci --cpu
 
 ################################################################################
 # Download u2net model needed by rembg (to avoid download at first start)
