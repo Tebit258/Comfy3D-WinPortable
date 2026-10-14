@@ -24,7 +24,7 @@ mv  "$workdir"/python_standalone  "$workdir"/Comfy3D_WinPortable/python_standalo
 # Install required packages
 $python_exe -m pip install "numpy>=2.3.0,<3.0" av comfy_aimdo "comfy_kitchen<=0.2.36"
 
-# Patch comfy_kitchen conv3d.py for PyTorch 2.6 compatibility using a direct Python snippet
+# Patch comfy_kitchen conv3d.py for PyTorch 2.6 compatibility (replace type hint and add Sequence import)
 $python_exe -c "
 import site, os
 for site_dir in site.getsitepackages():
@@ -33,7 +33,16 @@ for site_dir in site.getsitepackages():
         print(f'Patching {conv3d_path}...')
         with open(conv3d_path, 'r', encoding='utf-8') as f:
             content = f.read()
+        
+        # Asegurarse de importar Sequence si no está presente
+        if 'from typing import' in content and 'Sequence' not in content:
+            content = content.replace('from typing import', 'from typing import Sequence,')
+        elif 'from typing import' not in content:
+            content = 'from typing import Sequence\n' + content
+            
+        # Reemplazar la firma
         content = content.replace('stride: list[int]', 'stride: Sequence[int]')
+        
         with open(conv3d_path, 'w', encoding='utf-8') as f:
             f.write(content)
         break
